@@ -41,7 +41,7 @@ public class KafkaController {
         } catch (Exception ex){
             log.error(ex.getMessage());
         }
-        return new ResponseEntity<>("Message published failed", HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>("Message publish failed", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @GetMapping(value = "/status")

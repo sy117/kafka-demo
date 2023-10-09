@@ -1,8 +1,10 @@
 package org.example.producer.module.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.example.producer.module.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -22,8 +24,11 @@ import java.util.concurrent.TimeUnit;
 public class KafkaController {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Value("${kafka.producer.topic}")
+    private String topicName;
 
-    private String topicName = "test-topic";
 
     @PostMapping("/publish")
     public ResponseEntity<String> publishMessage(@RequestBody Message message){
@@ -34,8 +39,9 @@ public class KafkaController {
             if(Objects.isNull(message.getTimestamp())){
                 message.setTimestamp(System.currentTimeMillis());
             }
-            log.info("Publishing to topic: {}, msg: {}", topicName, message);
-            CompletableFuture<SendResult<String, String>> resp = kafkaTemplate.send(topicName, String.valueOf(message));
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            log.info("Publishing to topic: {}, msg: {}", topicName, jsonMessage);
+            CompletableFuture<SendResult<String, String>> resp = kafkaTemplate.send(topicName, jsonMessage);
             resp.completeOnTimeout(null, 5, TimeUnit.SECONDS);
             return new ResponseEntity<>("Message published successfully", HttpStatus.OK);
         } catch (Exception ex){
